@@ -24,6 +24,7 @@ namespace WpfMind
     public partial class MainWindow
     {
         System.Windows.Forms.PictureBox img;
+        Point lastLocation; // 画布上次被放置的位置
 
         public MainWindow()
         {
@@ -34,7 +35,11 @@ namespace WpfMind
             // 画布控件初始化（winform版迁移）
             img = new System.Windows.Forms.PictureBox();
             img.Paint += img_Paint;
-            pictureBoxHost.Child = img;
+            var imgPanel = new System.Windows.Forms.Panel();
+            pictureBoxHost.Child = imgPanel;
+            imgPanel.Controls.Add(img);
+            img.Width = 3000;
+            img.Height = 3000;
 
             // 加载一个模板
             content_tb.Text = DocHelper.readFromTemplate();
@@ -48,6 +53,37 @@ namespace WpfMind
                 Integer = 98,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
+
+            // 拖放事件
+            System.Windows.Forms.MouseEventHandler drag = (s, args) =>
+            {
+                var si = new Size(args.X + img.Left - lastLocation.X, args.Y + img.Top - lastLocation.Y);
+                lastLocation = new Point(args.X + img.Left, args.Y + img.Top);
+                img.Location += si;
+                // 2021.11.2 feature:无限的画布
+                //img.Width = (int)pictureBoxHost.ActualWidth- img.Left ;
+                //img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
+                //img.Size = new Size(splitContainer1.Panel2.Height - img.Top, splitContainer1.Panel2.Width - img.Left);
+                Console.WriteLine($"si={si}");
+            };
+            img.MouseDown += (s, args) => { lastLocation = new Point(args.X + img.Left, args.Y + img.Top); img.MouseMove += drag; };
+            img.MouseUp += (s, args) => img.MouseMove -= drag;
+
+            // 2021.11.2 feature:无限的画布拖动（针对画框外区域）
+            System.Windows.Forms.MouseEventHandler drag1 = (s, args) =>
+            {
+                var si = new Size(args.X - lastLocation.X, args.Y - lastLocation.Y);
+                lastLocation = new Point(args.X, args.Y);
+                img.Location += si;
+                // 2021.11.2 feature:无限的画布
+                //img.Width = (int)pictureBoxHost.ActualWidth - img.Left;
+                //img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
+                //img.Size = new Size(splitContainer1.Panel2.Height - img.Top, splitContainer1.Panel2.Width - img.Left);
+                Console.WriteLine($"si={si}");
+            };
+            pictureBoxHost.Child.MouseDown += (s, args) => { lastLocation = new Point(args.X, args.Y); pictureBoxHost.Child.MouseMove += drag1; };
+            pictureBoxHost.Child.MouseUp += (s, args) => pictureBoxHost.Child.MouseMove -= drag1;
+            // 拖放结束
 
         }
 
@@ -251,6 +287,8 @@ namespace WpfMind
 
         private void btnClickMe_Click(object sender, RoutedEventArgs e)
         {
+
+
             draw();
             //lbResult.Items.Add(pnlMain.FindResource("strPanel").ToString());
             //lbResult.Items.Add("hi");

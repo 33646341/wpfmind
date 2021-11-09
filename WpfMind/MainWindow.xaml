@@ -222,13 +222,7 @@
             </WrapPanel>
 
             <hc:SimplePanel Margin="22">
-
-
-                <Canvas>
-
-                </Canvas>
-
-                <wfi:WindowsFormsHost x:Name="pictureBoxHost" ToolTip=""></wfi:WindowsFormsHost>
+                <wfi:WindowsFormsHost x:Name="pictureBoxHost"></wfi:WindowsFormsHost>
             </hc:SimplePanel>
 
             <!--<ScrollViewer>
