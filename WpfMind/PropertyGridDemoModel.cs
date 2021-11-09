@@ -10,7 +10,7 @@ namespace WpfMind
         public string String { get; set; }
 
         [Category("Category2")]
-        public int Integer { get; set; }
+        public int 圆角半径 { get; set; }
 
         [Category("Category2")]
         public bool Boolean { get; set; }

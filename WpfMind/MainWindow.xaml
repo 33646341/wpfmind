@@ -210,9 +210,9 @@
             </DockPanel.Resources>
 
             <WrapPanel DockPanel.Dock="Top" HorizontalAlignment="Center" Margin="10">
-                <Button Name="btnClickMe" Click="btnClickMe_Click">Click me!</Button>
-                <ToggleButton Margin="10" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
-                <ToggleButton x:Name="prop_btn" Margin="10" HorizontalAlignment="Stretch"  Content="Right" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
+                <Button Name="btnClickMe" Click="btnClickMe_Click" Style="{StaticResource ButtonPrimary}">保存更改</Button>
+                <ToggleButton Style="{StaticResource ToggleButtonSuccess}" Margin="10" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
+                <ToggleButton Style="{StaticResource ToggleButtonInfo}" Margin="0,0,10,0" x:Name="prop_btn" HorizontalAlignment="Stretch"  Content="全局设置" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
                 <ToggleButton x:Name="btn" MouseEnter="btn_MouseEnter" Height="45" MouseLeave="btn_MouseLeave" Checked="btn_Checked">
                     <WrapPanel>
                         <TextBlock x:Name="textvalue">hello world</TextBlock>

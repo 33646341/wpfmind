@@ -31,7 +31,7 @@ namespace WpfMind
             InitializeComponent();
 
             this.DataContext = this;
-            
+
             // 画布控件初始化（winform版迁移）
             img = new System.Windows.Forms.PictureBox();
             img.Paint += img_Paint;
@@ -50,7 +50,7 @@ namespace WpfMind
                 String = "TestString",
                 Enum = Gender.Female,
                 Boolean = true,
-                Integer = 98,
+                圆角半径 = 15,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
 
@@ -184,7 +184,7 @@ namespace WpfMind
             newNode.PressedColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.HoverColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.Text = node["title"].ToString();//按钮文本
-            //newNode.Radius = 15;
+            newNode.Radius = DemoModel?.圆角半径 ?? 15;
             // 绘制结束
 
             // 拖拽事件
@@ -428,7 +428,13 @@ namespace WpfMind
         public PropertyGridDemoModel DemoModel
         {
             get => (PropertyGridDemoModel)GetValue(DemoModelProperty);
-            set => SetValue(DemoModelProperty, value);
+            set =>SetValue(DemoModelProperty, value); 
+                //Dispatcher.Invoke((Action)(()=> btnClickMe_Click(this,new RoutedEventArgs()))); }
+        }
+
+        private void PropertyGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            //draw();
         }
     }
 }
