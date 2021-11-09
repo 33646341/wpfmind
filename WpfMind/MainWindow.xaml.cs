@@ -1,30 +1,28 @@
-﻿using HandyControl.Themes;
+﻿using HandyControl.Controls;
+using HandyControl.Themes;
 using HandyControl.Tools;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using HandyControl.Controls;
-using System.Windows.Data;
-using System;
-using System.Globalization;
-using System.Windows.Controls.Primitives;
-using System.Drawing;
+using Mind;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Size = System.Drawing.Size;
-using Point = System.Drawing.Point;
+using System;
+using System.Drawing;
 using System.Linq;
-using Pen = System.Drawing.Pen;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Color = System.Drawing.Color;
-using Mind;
+using Pen = System.Drawing.Pen;
+using Point = System.Drawing.Point;
+using Size = System.Drawing.Size;
 //using RoundButton = System.Windows.Controls.Button;
 
 namespace WpfMind
 {
     public partial class MainWindow
     {
-        System.Windows.Forms.PictureBox img;
-        Point lastLocation; // 画布上次被放置的位置
+        private System.Windows.Forms.PictureBox img;
+        private Point lastLocation; // 画布上次被放置的位置
 
         public MainWindow()
         {
@@ -87,12 +85,12 @@ namespace WpfMind
 
         }
 
-        Action<Graphics> paint = (g) => { };//多播委托
+        private Action<Graphics> paint = (g) => { };//多播委托
         private int bottomOfLastLeaf; // 对于所有的叶子节点，保存它的底边y坐标，方便计算下一个叶子节点相对位置。
-        float scale = 1; // 缩放比例
+        private float scale = 1; // 缩放比例
 
         // 绘制方法的入口
-        void draw()
+        private void draw()
         {
             paint = null;// 刷新上一次的绘制
             bottomOfLastLeaf = -15; // 纵坐标初始点重置
@@ -154,7 +152,7 @@ namespace WpfMind
             }
         }
 
-        bool ctrlPressed; // 是否按下ctrl键
+        private bool ctrlPressed; // 是否按下ctrl键
 
         private void NewMethod(RoundButton parentNode, int child_index, JToken node)
         {
@@ -184,6 +182,14 @@ namespace WpfMind
             newNode.PressedColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.HoverColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.Text = node["title"].ToString();//按钮文本
+
+            var a = (JObject)node.SelectToken(@"style.properties");
+            Console.WriteLine(a?["fo:font-weight"] ?? "0");
+            //newNode.Text =(string) ;
+
+
+
+
             newNode.Radius = DemoModel?.圆角半径 ?? 15;
             // 绘制结束
 
@@ -274,7 +280,8 @@ namespace WpfMind
                 bottomOfLastLeaf = newNode.Bottom;
             }
         }
-        bool isLeaf(JObject node) => node.SelectToken("children.attached[0]") == null;
+
+        private bool isLeaf(JObject node) => node.SelectToken("children.attached[0]") == null;
 
         private void img_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
         {
@@ -365,7 +372,7 @@ namespace WpfMind
         }
         #endregion
 
-        Color _baseColor;
+        private Color _baseColor;
         private void btn_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             //var s = (ToggleButton)sender;
@@ -428,13 +435,8 @@ namespace WpfMind
         public PropertyGridDemoModel DemoModel
         {
             get => (PropertyGridDemoModel)GetValue(DemoModelProperty);
-            set =>SetValue(DemoModelProperty, value); 
-                //Dispatcher.Invoke((Action)(()=> btnClickMe_Click(this,new RoutedEventArgs()))); }
-        }
-
-        private void PropertyGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            //draw();
+            set => SetValue(DemoModelProperty, value);
+            //Dispatcher.Invoke((Action)(()=> btnClickMe_Click(this,new RoutedEventArgs()))); }
         }
     }
 }

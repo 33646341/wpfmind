@@ -12,6 +12,8 @@ namespace Mind
 {
     class DocHelper
     {
+        static string openingFilename;
+
         static string open()
         {
             string fileName;
@@ -22,6 +24,8 @@ namespace Mind
                 OpenFD.ShowDialog();                  //显示打开本地文件的窗体
                 fileName = OpenFD.FileName;       //把文件路径及名称赋给 fileName
             }
+            openingFilename = fileName;
+
             return fileName;
         }
 
