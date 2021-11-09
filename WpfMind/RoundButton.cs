@@ -17,9 +17,8 @@ namespace Mind
     public enum ControlState { Hover, Normal, Pressed }
     public class RoundButton : Button, MindNode
     {
-
         private int radius;//半径 
-        private Color _baseColor = Color.FromArgb(51, 161, 224);//基颜色
+        public Color _baseColor = Color.FromArgb(51, 161, 224);//基颜色
         private Color _hoverColor = Color.FromArgb(51, 0, 224);//基颜色
         private Color _normalColor = Color.FromArgb(0, 161, 224);//基颜色
         private Color _pressedColor = Color.FromArgb(51, 161, 0);//基颜色
@@ -184,6 +183,7 @@ namespace Mind
                 // 外框色
                 if (Focused)
                 {
+                    //e.Graphics.FillPath(b, path);
                     e.Graphics.FillPath(new SolidBrush(Color.FromArgb(255, 46, 189, 255)), path);
                 }
                 else
@@ -192,7 +192,9 @@ namespace Mind
                 }
 
                 // 内填充色
-                e.Graphics.FillPath(new SolidBrush(Color.Azure), GetRoundedRectPath(new Rectangle(3, 3, Width - 6, Height - 6), radius-4));
+                //e.Graphics.FillPath(new SolidBrush(Color.Azure), GetRoundedRectPath(new Rectangle(3, 3, Width - 6, Height - 6), radius-4));
+                e.Graphics.FillPath(new SolidBrush(_baseColor), GetRoundedRectPath(new Rectangle(3, 3, Width - 6, Height - 6), radius-4));
+
 
                 //Font fo = new Font("宋体", 10.5F); 当然是采用属性设置的字体
                 Brush brush = new SolidBrush(this.ForeColor);

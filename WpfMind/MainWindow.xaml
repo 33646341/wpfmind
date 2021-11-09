@@ -10,9 +10,9 @@
     xmlns:local="clr-namespace:WpfMind"
     xmlns:wfi="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
     
-    Title="MainWindow"
-    Width="800"
-    Height="450"
+    Title="欢迎来到思维导图"
+    Width="1200"
+    Height="700"
     ShowTitle="True"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -24,8 +24,8 @@
             </Grid.ColumnDefinitions>
             <StackPanel Height="29">
                 <Menu HorizontalAlignment="Left">
-                    <MenuItem Header="Header1">
-                        <MenuItem Header="Header1"/>
+                    <MenuItem Header="文件(F)">
+                        <MenuItem Header="打开(O)" Click="MenuItem_Click"/>
                         <MenuItem Header="Header2"/>
                     </MenuItem>
                     <MenuItem Header="Header2">
@@ -169,58 +169,65 @@
         </LinearGradientBrush>
     </Window.Resources>
     <Grid>
-        <hc:Drawer Name="DrawerLeft" Dock="Left" ShowMode="Cover">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <hc:Drawer Name="DrawerLeft" Dock="Left" ShowMode="Cover" Margin="0,0,-0.185,0.109">
             <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <TextBlock Margin="10,0,0,0" Text="Header" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
+                    <TextBlock Margin="10,0,0,0" Text="大纲视图" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
                     <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
+                    <TextBox x:Name="content_tb" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Text="TextBox" Width="120" TextChanged="content_tb_TextChanged" />
+
                 </Grid>
             </Border>
         </hc:Drawer>
-        <hc:Drawer Name="DrawerRight" MaskCanClose="False" ShowMask="False" ShowMode="Cover">
+        <hc:Drawer Name="DrawerRight" MaskCanClose="False" ShowMask="False" ShowMode="Cover" Margin="0,0,-0.185,0.109">
             <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
                     <TextBlock Margin="10,0,0,0" Text="Header" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
                     <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
+                    <hc:PropertyGrid SelectedObject="{Binding DemoModel}"/>
                 </Grid>
+
             </Border>
         </hc:Drawer>
 
 
-        <DockPanel Margin="10" Name="pnlMain">
+        <DockPanel Margin="10,10,9.815,10.109" Name="pnlMain">
             <DockPanel.Resources>
                 <sys:String x:Key="strPanel">Hello, Panel world!</sys:String>
             </DockPanel.Resources>
 
             <WrapPanel DockPanel.Dock="Top" HorizontalAlignment="Center" Margin="10">
                 <Button Name="btnClickMe" Click="btnClickMe_Click">Click me!</Button>
-                <TextBlock Margin="5"><Run Text="This is a TextBlock control and it comes with a very long text"/><InlineUIContainer>
-                    </InlineUIContainer></TextBlock>
-                <TextBox x:Name="content_tb" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Text="TextBox" Width="120" TextChanged="content_tb_TextChanged" />
-                <ToggleButton Margin="10" HorizontalAlignment="Stretch" Content="Left" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}"/>
-                <ToggleButton Margin="10" HorizontalAlignment="Stretch"  Content="Right" IsChecked="{Binding IsOpen,ElementName=DrawerRight}"/>
-            </WrapPanel>
-
-            <hc:SimplePanel Margin="22">
+                <ToggleButton Margin="10" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
+                <ToggleButton x:Name="prop_btn" Margin="10" HorizontalAlignment="Stretch"  Content="Right" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
                 <ToggleButton x:Name="btn" MouseEnter="btn_MouseEnter" Height="45" MouseLeave="btn_MouseLeave" Checked="btn_Checked">
                     <WrapPanel>
                         <TextBlock x:Name="textvalue">hello world</TextBlock>
                         <TextBox x:Name="text_tb" Text="111" Visibility="Collapsed"></TextBox>
                     </WrapPanel>
                 </ToggleButton>
-                
+            </WrapPanel>
+
+            <hc:SimplePanel Margin="22">
+
+
                 <Canvas>
 
                 </Canvas>
-                
+
                 <wfi:WindowsFormsHost x:Name="pictureBoxHost" ToolTip=""></wfi:WindowsFormsHost>
             </hc:SimplePanel>
 

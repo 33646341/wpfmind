@@ -28,10 +28,27 @@ namespace WpfMind
         public MainWindow()
         {
             InitializeComponent();
+
             this.DataContext = this;
+            
+            // 画布控件初始化（winform版迁移）
             img = new System.Windows.Forms.PictureBox();
-            //img.BackColor = Color.White;
+            img.Paint += img_Paint;
             pictureBoxHost.Child = img;
+
+            // 加载一个模板
+            content_tb.Text = DocHelper.readFromTemplate();
+
+            // 属性窗口赋值
+            DemoModel = new PropertyGridDemoModel
+            {
+                String = "TestString",
+                Enum = Gender.Female,
+                Boolean = true,
+                Integer = 98,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+
         }
 
         Action<Graphics> paint = (g) => { };//多播委托
@@ -61,6 +78,7 @@ namespace WpfMind
                 img.Scale(new SizeF(scale, scale));
                 //img.ResumeLayout();
 
+                //img.Invalidate();
                 img.Refresh();
 
                 //img.SizeMode = PictureBoxSizeMode.Zoom;
@@ -125,9 +143,10 @@ namespace WpfMind
             }
 
             //newNode.Font = new Font("微软雅黑", 15.73109F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(134)));
-            //newNode.NormalColor = Color.White;
-            //newNode.PressedColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            //newNode.HoverColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            newNode.NormalColor = Color.White;
+            newNode._baseColor = _baseColor;
+            newNode.PressedColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            newNode.HoverColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.Text = node["title"].ToString();//按钮文本
             //newNode.Radius = 15;
             // 绘制结束
@@ -166,7 +185,8 @@ namespace WpfMind
             // 拖拽结束
 
             // 缩放事件
-            newNode.KeyDown += (_, args) => {
+            newNode.KeyDown += (_, args) =>
+            {
 
                 ctrlPressed = args.Control;
 
@@ -174,7 +194,8 @@ namespace WpfMind
             };
             // 缩放结束
             //tab/enter键的处理
-            newNode.KeyDown += (_, args) => {
+            newNode.KeyDown += (_, args) =>
+            {
                 //Btn_KeyPress(_, args);
             };
 
@@ -219,6 +240,15 @@ namespace WpfMind
         }
         bool isLeaf(JObject node) => node.SelectToken("children.attached[0]") == null;
 
+        private void img_Paint(object sender, System.Windows.Forms.PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;  //图片柔顺模式选择
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;//高质量
+            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;//再加一点
+            if (paint != null) paint(g);
+        }
+
         private void btnClickMe_Click(object sender, RoutedEventArgs e)
         {
             draw();
@@ -234,43 +264,70 @@ namespace WpfMind
 
         private void ButtonSkins_OnClick(object sender, RoutedEventArgs e)
         {
-        if (e.OriginalSource is Button button)
-        {
-            PopupConfig.IsOpen = false;
-            if (button.Tag is ApplicationTheme tag)
+            if (e.OriginalSource is Button button)
             {
-                ((App)Application.Current).UpdateTheme(tag);
-            }
-            else if (button.Tag is System.Windows.Media.Brush accentTag)
-            {
-                ((App)Application.Current).UpdateAccent(accentTag);
-            }
-            else if (button.Tag is "Picker")
-            {
-                var picker = SingleOpenHelper.CreateControl<ColorPicker>();
-                var window = new PopupWindow
+                PopupConfig.IsOpen = false;
+                if (button.Tag is ApplicationTheme tag)
                 {
-                    PopupElement = picker,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    AllowsTransparency = true,
-                    WindowStyle = WindowStyle.None,
-                    MinWidth = 0,
-                    MinHeight = 0,
-                    Title = "Select Accent Color"
-                };
+                    ((App)Application.Current).UpdateTheme(tag);
 
-                picker.SelectedColorChanged += delegate
+                }
+                else if (button.Tag is System.Windows.Media.Brush accentTag)
                 {
-                    ((App)Application.Current).UpdateAccent(picker.SelectedBrush);
-                    window.Close();
-                };
-                picker.Canceled += delegate { window.Close(); };
-                window.Show();
+                    ((App)Application.Current).UpdateAccent(accentTag);
+
+                    ///
+                    if (accentTag is SolidColorBrush br)
+                    {
+                        var c = br.Color;
+                        _baseColor = Color.FromArgb(c.A, c.R, c.G, c.B);
+                    }
+                    else if (accentTag is LinearGradientBrush b)
+                    {
+                        var c = b.GradientStops[0].Color;
+                        _baseColor = Color.FromArgb(c.A, c.R, c.G, c.B);
+                    }
+
+                    ///
+
+                }
+                else if (button.Tag is "Picker")
+                {
+                    var picker = SingleOpenHelper.CreateControl<ColorPicker>();
+                    var window = new PopupWindow
+                    {
+                        PopupElement = picker,
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                        AllowsTransparency = true,
+                        WindowStyle = WindowStyle.None,
+                        MinWidth = 0,
+                        MinHeight = 0,
+                        Title = "Select Accent Color"
+                    };
+
+                    picker.SelectedColorChanged += delegate
+                    {
+                        ((App)Application.Current).UpdateAccent(picker.SelectedBrush);
+                        ///
+                        var c = picker.SelectedBrush.Color;
+                        _baseColor = Color.FromArgb(c.A, c.R, c.G, c.B);
+                        ///
+
+                        window.Close();
+                    };
+                    picker.Canceled += delegate { window.Close(); };
+                    window.Show();
+                }
             }
+
+            img.Visible = false;
+            img.Visible = true;
+            draw();
+
         }
-    }
         #endregion
 
+        Color _baseColor;
         private void btn_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             //var s = (ToggleButton)sender;
@@ -285,10 +342,10 @@ namespace WpfMind
             var s = (ToggleButton)sender;
             //if ((bool)s.IsChecked)
             //{
-                textvalue.Text = text_tb.Text;
-                textvalue.Visibility = Visibility.Visible;
-                text_tb.Visibility = Visibility.Collapsed;
-                s.IsChecked = true;
+            textvalue.Text = text_tb.Text;
+            textvalue.Visibility = Visibility.Visible;
+            text_tb.Visibility = Visibility.Collapsed;
+            s.IsChecked = false;
             //}
         }
 
@@ -303,8 +360,37 @@ namespace WpfMind
 
         private void content_tb_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if(img!=null)
-            draw();
+            if (img != null)
+                draw();
+        }
+
+        private void ToggleButton_Checked(object sender, RoutedEventArgs e)
+        {
+            pictureBoxHost.Margin = new Thickness(300, 0, (bool)prop_btn.IsChecked ? 300 : 0, 0);
+        }
+
+        private void ToggleButton_Unchecked(object sender, RoutedEventArgs e)
+        {
+            pictureBoxHost.Margin = new Thickness(0, 0, (bool)prop_btn.IsChecked ? 300 : 0, 0);
+        }
+
+        private void ToggleButton_Checked_1(object sender, RoutedEventArgs e)
+        {
+            pictureBoxHost.Margin = new Thickness(0, 0, 300, 0);
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            content_tb.Text = DocHelper.read();
+        }
+
+        public static readonly DependencyProperty DemoModelProperty = DependencyProperty.Register(
+    "DemoModel", typeof(PropertyGridDemoModel), typeof(MainWindow), new PropertyMetadata(default(PropertyGridDemoModel)));
+
+        public PropertyGridDemoModel DemoModel
+        {
+            get => (PropertyGridDemoModel)GetValue(DemoModelProperty);
+            set => SetValue(DemoModelProperty, value);
         }
     }
 }
