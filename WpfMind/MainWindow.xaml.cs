@@ -50,7 +50,6 @@ namespace WpfMind
                 tempJref = null
             };
             myJref.OnMyChange += new TmpChanged(JrefChanged);
-
             // 加载一个模板
             content_tb.Text = DocHelper.readFromTemplate();
 
@@ -67,8 +66,40 @@ namespace WpfMind
                 大小 = 9,
                 字体样式 = System.Drawing.FontStyle.Regular,
                 颜色 = ModelColor.Black
-        }; 
-            DemoModel.OnChanged += new ModelChanged(model_OnChanged);
+            };
+
+            //    DemoModel.OnChanged += new ModelChanged(model_OnChanged);
+            //InitializeModel(crtModel);
+            crtModel = new PropertyGridDemoModel
+            {
+                圆角半径 = 25,
+                字体 = Family.微软雅黑,
+                大小 = 9,
+                字体样式 = System.Drawing.FontStyle.Regular,
+                颜色 = ModelColor.Black
+            };
+            CopyStyle(crtModel, DemoModel);
+
+
+            img.MouseWheel += (s, args) =>
+            {
+                if (ctrlPressed)
+                {
+                    float scale_ori = scale;
+                    scale += ((float)args.Delta) / 1200;
+                    if (scale < 0.1 || scale > 5) scale = scale_ori;
+                    draw();
+                }
+            };
+
+            // 缩放事件
+            img.KeyDown += (_, args) => ctrlPressed = args.Control;
+            img.KeyUp += (_, args) =>
+            {
+                ctrlPressed = args.Control;
+                Console.WriteLine($"keyup: ctrlPressed={ctrlPressed}");
+            };
+            // 缩放结束
 
             // 拖放事件
             System.Windows.Forms.MouseEventHandler drag = (s, args) =>
@@ -77,8 +108,8 @@ namespace WpfMind
                 lastLocation = new Point(args.X + img.Left, args.Y + img.Top);
                 img.Location += si;
                 // 2021.11.2 feature:无限的画布
-                //img.Width = (int)pictureBoxHost.ActualWidth- img.Left ;
-                //img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
+                img.Width = (int)(pictureBoxHost.ActualWidth*inchesToPixels - img.Left);
+                img.Height = (int)(pictureBoxHost.ActualHeight * inchesToPixels - img.Top);
                 //img.Size = new Size(splitContainer1.Panel2.Height - img.Top, splitContainer1.Panel2.Width - img.Left);
                 Console.WriteLine($"si={si}");
             };
@@ -92,8 +123,8 @@ namespace WpfMind
                 lastLocation = new Point(args.X, args.Y);
                 img.Location += si;
                 // 2021.11.2 feature:无限的画布
-                img.Width = (int)pictureBoxHost.ActualWidth - img.Left;
-                img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
+                img.Width = (int)(pictureBoxHost.ActualWidth * inchesToPixels - img.Left);
+                img.Height = (int)(pictureBoxHost.ActualHeight * inchesToPixels - img.Top);
                 //img.Size = new Size(splitContainer1.Panel2.Height - img.Top, splitContainer1.Panel2.Width - img.Left);
                 Console.WriteLine($"si={si}");
             };
@@ -195,7 +226,7 @@ namespace WpfMind
             maxDepth = depth > maxDepth ? depth : maxDepth;
 
             ////添加上下文菜单
-            //NewMenustrip(newNode);
+            NewMenustrip(newNode);
 
             // 绘制形状
             img.Controls.Add(newNode);
@@ -234,6 +265,11 @@ namespace WpfMind
                     var b = s as RoundButton; 
                     //crtjrf = b.Jref;
                     b.DoDragDrop(b, (System.Windows.Forms.DragDropEffects)DragDropEffects.All);
+                }
+                if (e.Button == System.Windows.Forms.MouseButtons.Right)
+                {
+                    var b = s as RoundButton;
+                    b.Focus();
                 }
             };
             newNode.DragEnter += (s, e) =>
@@ -525,9 +561,11 @@ namespace WpfMind
             set => SetValue(DemoModelProperty, value);
             //Dispatcher.Invoke((Action)(()=> btnClickMe_Click(this,new RoutedEventArgs()))); }
         }
+
+        const double inchesToPixels = 1.2357;
         private void toCenter_Click(object sender, RoutedEventArgs e)
         {
-            var aw = (int)(pictureBoxHost.ActualWidth * 1.2357);//有偏移，原因未知
+            var aw = (int)(pictureBoxHost.ActualWidth * inchesToPixels);//有偏移，原因未知
             Console. WriteLine("aw=" + aw);
             var ah = (int)pictureBoxHost.ActualHeight;
             var iw = maxDepth * (153 + 30) + 153;

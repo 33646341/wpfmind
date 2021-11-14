@@ -25,11 +25,11 @@
             <StackPanel Height="29">
                 <Menu HorizontalAlignment="Left">
                     <MenuItem Header="文件">
-                        <MenuItem Header="打开(O)" Click="MenuItem_Click"/>
+                        <MenuItem Header="打开" Click="MenuItem_Click"/>
                         <MenuItem Header="保存"/>
                         <MenuItem Header="另存为"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="导出"/>
+                        <MenuItem Header="退出"/>
                         <MenuItem Header="Header2"/>
                         <MenuItem Header="Header2"/>
                     </MenuItem>

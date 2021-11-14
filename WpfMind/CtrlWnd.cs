@@ -28,8 +28,10 @@ namespace WpfMind
         MyJref myJref;
         private bool isNodeOp = true;//增删时是true，其他操作是false
         private bool isPainting = false;
-        public bool isediting = true;
+        public bool isediting = true; 
+        //public bool ischangingstyle = false;
         public delegate void TmpChanged(object sender);
+        public PropertyGridDemoModel crtModel;
         #endregion
         #region 节点增删
         private void Btn_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -37,27 +39,27 @@ namespace WpfMind
             RoundButton s = sender as RoundButton;
             if (e.KeyData == System.Windows.Forms.Keys.Tab)//子节点
             {
-                AddSubTopic(s);
+                AddSubTopic(s.Jref);
             }
             if (e.KeyData == System.Windows.Forms.Keys.Enter)//兄弟节点
             {
-                AddBroTopic(s);
+                AddBroTopic(s.Jref);
             }
             if (e.KeyData == System.Windows.Forms.Keys.Delete)
             {
-                DelTopic(s);
+                DelTopic(s.Jref);
             }
         }
-        private void AddSubTopic(RoundButton newNode)
+        private void AddSubTopic(JObject newNodeJref)
         {
-            if (isLeaf(newNode.Jref))
+            if (isLeaf(newNodeJref))
             {
-                newNode.Jref.Add(new JProperty("children", new JObject(new JProperty("attached", new JArray()))));
+                newNodeJref.Add(new JProperty("children", new JObject(new JProperty("attached", new JArray()))));
             }
-            var children = newNode.Jref.SelectToken("children.attached") as JArray;
+            var children = newNodeJref.SelectToken("children.attached") as JArray;
             JObject onenewnode = new JObject();
             var num = children.Count();
-            string title = newNode.Jref["title"].ToString();
+            string title = newNodeJref["title"].ToString();
             if (Regex.IsMatch(title, "中心主题"))
             {
                 onenewnode["title"] = "分支主题" + (num + 1).ToString();
@@ -68,18 +70,18 @@ namespace WpfMind
             }
             children.Add(onenewnode);
             myJref.tempJref = onenewnode;
-            content_tb.Text = JsonConvert.SerializeObject(newNode.Jref.Root, Formatting.Indented);
+            content_tb.Text = JsonConvert.SerializeObject(newNodeJref.Root, Formatting.Indented);
         }
 
-        private void AddBroTopic(RoundButton newNode)//生成兄弟节点
+        private void AddBroTopic(JObject newNodeJref)//生成兄弟节点
         {
             //JObject  ob= (JObject)newNode.Jref.Parent;
-            int num = newNode.Jref.Parent.Count;
+            int num = newNodeJref.Parent.Count;
             JObject onenewnode = new JObject();
-            string title = newNode.Jref["title"].ToString();
+            string title = newNodeJref["title"].ToString();
             if (Regex.IsMatch(title, "中心主题"))
             {
-                AddSubTopic(newNode);
+                AddSubTopic(newNodeJref);
                 return;
             }
             else if (Regex.IsMatch(title, "分支主题"))
@@ -90,26 +92,27 @@ namespace WpfMind
             {
                 onenewnode["title"] = "子主题" + (num + 1).ToString();
             }
-            newNode.Jref.AddAfterSelf(onenewnode);
+            newNodeJref.AddAfterSelf(onenewnode);
             myJref.tempJref = onenewnode;
-            content_tb.Text = JsonConvert.SerializeObject(newNode.Jref.Root, Formatting.Indented);
+            content_tb.Text = JsonConvert.SerializeObject(newNodeJref.Root, Formatting.Indented);
         }
 
-        private void DelTopic(RoundButton newNode)//删除节点
+        private void DelTopic(JObject newNodeJref)//删除节点
         {
-            var ob = newNode.Jref.Root;
+            Console.WriteLine("" + newNodeJref["title"]);
+            var ob = newNodeJref.Root;
 
-            if (newNode.Jref.AfterSelf().Count() != 0)
+            if (newNodeJref.AfterSelf().Count() != 0)
             {
-                myJref.tempJref = (JObject)newNode.Jref.AfterSelf().First();
+                myJref.tempJref = (JObject)newNodeJref.AfterSelf().First();
             }
-            else if (newNode.Jref.BeforeSelf().Count() != 0)
+            else if (newNodeJref.BeforeSelf().Count() != 0)
             {
-                myJref.tempJref = (JObject)newNode.Jref.BeforeSelf().Last();
+                myJref.tempJref = (JObject)newNodeJref.BeforeSelf().Last();
             }
             else
             {
-                foreach (var anc in newNode.Jref.Ancestors())
+                foreach (var anc in newNodeJref.Ancestors())
                 {
                     if (anc.Type == JTokenType.Object)
                     {
@@ -117,7 +120,7 @@ namespace WpfMind
                         if (obj.ContainsKey("children"))
                         {
                             var c = obj.SelectToken("children.attached") as JArray;
-                            if (c.Contains(newNode.Jref))
+                            if (c.Contains(newNodeJref))
                             {
                                 myJref.tempJref = obj;
                             }
@@ -126,7 +129,7 @@ namespace WpfMind
                 }
             }
             //删除节点
-            newNode.Jref.Remove();
+            newNodeJref.Remove();
             content_tb.Text = JsonConvert.SerializeObject(ob, Formatting.Indented);
         }
         #endregion 
@@ -203,7 +206,7 @@ namespace WpfMind
                     }
                 }
                     Console.WriteLine("myJref.tempJref is changing,title: " + myJref.tempJref["title"]) ;
-                Jref["style"]["properties"] = styleproperty;
+                    Jref["style"]["properties"] = styleproperty;
                     Console.WriteLine("Jref is changed,title: " + myJref.tempJref["title"]);
                 }
                 content_tb.Text = JsonConvert.SerializeObject(Jref.Root, Formatting.Indented);
@@ -246,12 +249,17 @@ namespace WpfMind
         private void JrefChanged(object sender)
         {
             Console.WriteLine("in JrefChanged function");
-            if (myJref.tempJref != null)
-            {
+            //if (ischangingstyle == true)
+            //{
+                if (myJref.tempJref != null)
+                {
                 if ((JObject)myJref.tempJref["style"] != null)
                 {
                     Console.WriteLine("JrefChanged:=>myJref has title : " + myJref.tempJref["title"].ToString());
-                    InitializeJref(myJref.tempJref);
+                    if (!((JObject)myJref.tempJref["style"]).ContainsKey("properties"))
+                    {
+                        InitializeJref(myJref.tempJref);
+                    }
                 }
                 else
                 {
@@ -287,7 +295,8 @@ namespace WpfMind
                 //}
 
             }
-        
+            //}
+
         }
         //初始化样式
         private void InitializeJref(JObject Jref)
@@ -302,6 +311,77 @@ namespace WpfMind
             tmpstyle.Add(new JProperty("properties", styleproperty));
             Jref["style"] = tmpstyle;
         }
+
+        private void NewMenustrip(RoundButton newNode)
+        {
+            //新建一个上下文菜单，绑定菜单
+            System.Windows.Forms.ContextMenuStrip newmenustrip = new System.Windows.Forms.ContextMenuStrip();
+            newNode.ContextMenuStrip = newmenustrip;
+            //建个菜单项
+            System.Windows.Forms.ToolStripMenuItem tsmi1 = new System.Windows.Forms.ToolStripMenuItem("删除");
+            System.Windows.Forms.ToolStripMenuItem tsmi2 = new System.Windows.Forms.ToolStripMenuItem("主题");
+            System.Windows.Forms.ToolStripMenuItem tsmi3 = new System.Windows.Forms.ToolStripMenuItem("子主题");
+            System.Windows.Forms.ToolStripMenuItem tsmi4 = new System.Windows.Forms.ToolStripMenuItem("拷贝样式");
+            System.Windows.Forms.ToolStripMenuItem tsmi5 = new System.Windows.Forms.ToolStripMenuItem("粘贴样式");
+            //System.Windows.Forms.ToolStripMenuItem tsmi6 = new System.Windows.Forms.ToolStripMenuItem("重设样式");
+            tsmi1.Click += DemoClick;
+            tsmi2.Click += DemoClick;
+            tsmi3.Click += DemoClick;
+            tsmi4.Click += DemoClick;
+            tsmi5.Click += DemoClick;
+            //tsmi6.Click += DemoClick;
+            //添加主菜单
+            newmenustrip.Items.Add(tsmi1);
+            newmenustrip.Items.Add(tsmi2);
+            newmenustrip.Items.Add(tsmi3);
+            newmenustrip.Items.Add(tsmi4);
+            newmenustrip.Items.Add(tsmi5);
+            //newmenustrip.Items.Add(tsmi6);
+        }
+        private void DemoClick(object sender, EventArgs e)
+        {
+            System.Windows.Forms.ToolStripMenuItem toolStripMenuItem = sender as System.Windows.Forms.ToolStripMenuItem;
+            switch (toolStripMenuItem.Text)
+            {
+                case ("删除"): { DelTopic(myJref.tempJref); break; }
+                case ("主题"): {AddBroTopic(myJref.tempJref); break; }
+                case ("子主题"): { AddSubTopic(myJref.tempJref); break; }
+                case ("拷贝样式"): {
+                        CopyStyle(crtModel, DemoModel);break; }
+                case ("粘贴样式"): {
+                        DemoModel=crtModel;
+                        DemoModel.OnChanged += model_OnChanged;
+                        break; }
+                //case ("重设样式"): {
+                //        //ischangingstyle = true; 
+                //        InitializeJref(myJref.tempJref);
+                //        //ischangingstyle = true;
+                //        CopyStyle(crtModel, DemoModel);
+                //        break; }
+            }
+        }
+
+        private void CopyStyle(PropertyGridDemoModel crtModel,PropertyGridDemoModel Dmodel)
+        {
+            crtModel.圆角半径 = Dmodel.圆角半径;
+            crtModel.字体 = Dmodel.字体;
+            crtModel.大小 = Dmodel.大小;
+            crtModel.字体样式 = Dmodel.字体样式;
+            crtModel.颜色 = Dmodel.颜色;
+        }
+        private void InitializeModel(PropertyGridDemoModel model)
+        {
+            model = new PropertyGridDemoModel
+            {
+                圆角半径 = 25,
+                字体 = Family.微软雅黑,
+                大小 = 9,
+                字体样式 = System.Drawing.FontStyle.Regular,
+                颜色 = ModelColor.Black
+            };
+            model.圆角半径 = 28;
+            model.OnChanged += new ModelChanged(model_OnChanged);
+        }
         //监听Jref的类
         class MyJref
         {
@@ -315,10 +395,20 @@ namespace WpfMind
                     return TempJref;
                 }
                 set
-                {
-                    if (TempJref!=null&&TempJref!=value&&TempJref["title"] != value["title"])
+                {//&&TempJref!=value
+                    if (TempJref!=null )
                     {
-                        isJrefChanged = true;
+                        if (TempJref["title"] != value["title"] || TempJref["style"] != value["style"])
+                        {
+                            if (TempJref["title"] != value["title"]){
+                                Console.WriteLine("title not equal");
+                            }
+                            if (TempJref["style"] != value["style"])
+                            {
+                                Console.WriteLine("style not equal");
+                            }
+                            isJrefChanged = true;
+                        }
                     }
                     TempJref = value;
                     if (isJrefChanged) {
