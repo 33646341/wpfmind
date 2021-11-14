@@ -189,14 +189,15 @@ namespace WpfMind
             if (DemoModel != null)
                 {
                     //Console.WriteLine("DemoModel != null");
-                    JObject styleproperty = new JObject();
-                styleproperty["fo:font-radius"] = DemoModel.圆角半径;
-                styleproperty["fo:font-size"] = DemoModel.大小.ToString() + "pt";
-                styleproperty["fo:font-style"] = DemoModel.字体样式.ToString();
-                styleproperty["fo:font-family"] = DemoModel.字体.ToString();
-                styleproperty["fo:color"] = DemoModel.颜色.ToString();
+                JObject styleproperty = new JObject();
+                //GiveProperty(styleproperty, DemoModel);
+                    styleproperty["fo:font-radius"] = DemoModel.圆角半径;
+                    styleproperty["fo:font-size"] = DemoModel.大小.ToString() + "pt";
+                    styleproperty["fo:font-style"] = DemoModel.字体样式.ToString();
+                    styleproperty["fo:font-family"] = DemoModel.字体.ToString();
+                    styleproperty["fo:color"] = DemoModel.颜色.ToString();
 
-                if (!Jref.ContainsKey("style"))
+                    if (!Jref.ContainsKey("style"))
                 {
                     Jref.Add(new JProperty("style", new JObject()));
                     var ob = (JObject)Jref["style"];
@@ -205,13 +206,37 @@ namespace WpfMind
                         ob.Add(new JProperty("properties", new JObject()));
                     }
                 }
-                    Console.WriteLine("myJref.tempJref is changing,title: " + myJref.tempJref["title"]) ;
+                Console.WriteLine("myJref.tempJref is changing,title: " + myJref.tempJref["title"]) ;
+
+                    //此处只留一个
+
+                    //GiveFont(styleproperty);
                     Jref["style"]["properties"] = styleproperty;
+
                     Console.WriteLine("Jref is changed,title: " + myJref.tempJref["title"]);
+                    content_tb.Text = JsonConvert.SerializeObject(Jref.Root, Formatting.Indented);
                 }
-                content_tb.Text = JsonConvert.SerializeObject(Jref.Root, Formatting.Indented);
+                
+            }
         }
+        #region 王继承的代码接入WPF环境
+        private void GiveProperty(JObject styleproperty,PropertyGridDemoModel Demodel)
+        {
+            
+            styleproperty["fo:font-radius"] = DemoModel.圆角半径;
+            styleproperty["fo:font-size"] = DemoModel.大小.ToString() + "pt";
+            styleproperty["fo:font-style"] = DemoModel.字体样式.ToString();
+            styleproperty["fo:font-family"] = DemoModel.字体.ToString();
+            styleproperty["fo:color"] = DemoModel.颜色.ToString();
         }
+        private void GiveFont(JObject property)
+        {
+
+            myJref.tempJref["title"]["properties"] = property;
+            content_tb.Text = JsonConvert.SerializeObject(myJref.tempJref.Root, Formatting.Indented);
+        }
+        #endregion
+
         //读样式
         private void ReadStyles(RoundButton newNode)
         {

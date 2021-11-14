@@ -271,6 +271,7 @@ namespace WpfMind
             }
             content_tb.Text = JsonConvert.SerializeObject(newNode.Jref.Root, Formatting.Indented);
         }
+
         #endregion
         int maxDepth = 0;
         private void NewMethod(RoundButton parentNode, int child_index, JToken node)
