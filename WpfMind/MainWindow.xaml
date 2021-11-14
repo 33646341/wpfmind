@@ -34,7 +34,7 @@
                         <MenuItem Header="Header2"/>
                     </MenuItem>
                     <MenuItem Header="编辑">
-                        <MenuItem Header="Header1"/>
+                        <MenuItem Header="撤销"/>
                         <MenuItem Header="Header2"/>
                         <MenuItem Header="Header2"/>
                         <MenuItem Header="Header2"/>
@@ -227,7 +227,7 @@
                     </Grid.RowDefinitions>
                     <TextBlock Margin="10,0,0,0" Text="大纲视图" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
                     <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
-                    <TextBox x:Name="content_tb" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Text="TextBox" Width="120" TextChanged="content_tb_TextChanged" />
+                    <TextBox x:Name="content_tb" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Width="120" TextChanged="content_tb_TextChanged" />
 
                 </Grid>
             </Border>
@@ -243,38 +243,49 @@
                     </Grid.RowDefinitions>
                     <TextBlock Margin="10,0,0,0" Text="Header" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
                     <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
-                    <hc:PropertyGrid SelectedObject="{Binding DemoModel}"/>
+                    <hc:PropertyGrid SelectedObject="{Binding DemoModel}" />
+                    
                 </Grid>
-
+<!--SelectedObjectChanged="PropertyGrid_SelectedObjectChanged"--> <!--SelectedObjectChanged="PropertyGrid_SelectedObjectChanged"-->
             </Border>
         </hc:Drawer>
 
 
-        <DockPanel Margin="10,10,9.815,10.109" Name="pnlMain">
+        <DockPanel Name="pnlMain">
             <DockPanel.Resources>
                 <sys:String x:Key="strPanel">Hello, Panel world!</sys:String>
             </DockPanel.Resources>
 
             <WrapPanel DockPanel.Dock="Top" HorizontalAlignment="Center" Margin="10">
-                <Button Name="btnClickMe" Click="btnClickMe_Click" Style="{StaticResource ButtonPrimary}">保存更改</Button>
-                <ToggleButton Style="{StaticResource ToggleButtonSuccess}" Margin="10" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
-                <ToggleButton Style="{StaticResource ToggleButtonInfo}" Margin="0,0,10,0" x:Name="prop_btn" HorizontalAlignment="Stretch"  Content="全局设置" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
+                <Button Name="btnClickMe" Click="btnClickMe_Click" Style="{StaticResource ButtonPrimary}" Margin="20,0,10,0">保存更改</Button>
+                <ToggleButton Style="{StaticResource ToggleButtonSuccess}" Margin="0,0,10,0" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
+                <ToggleButton Style="{StaticResource ToggleButtonInfo}" Margin="0" x:Name="prop_btn" HorizontalAlignment="Stretch"  Content="全局设置" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
                 <ToggleButton Visibility="Collapsed" x:Name="btn" MouseEnter="btn_MouseEnter" Height="45" MouseLeave="btn_MouseLeave" Checked="btn_Checked">
                     <WrapPanel>
                         <TextBlock x:Name="textvalue">hello world</TextBlock>
                         <TextBox x:Name="text_tb" Text="111" Visibility="Collapsed"></TextBox>
                     </WrapPanel>
                 </ToggleButton>
-            </WrapPanel>
+                <Button Style="{StaticResource ButtonPrimary}" x:Name="button" Content="撤销" Margin="10,0,0,0" HorizontalAlignment="Stretch" Click="button_Click" PreviewLostKeyboardFocus="btnClickMe_PreviewLostKeyboardFocus" Width="60" />
+                <Button Name="toCenter" Click="toCenter_Click" Style="{StaticResource ButtonPrimary}" Margin="10,0,20,0">居中对齐</Button>
 
-            <hc:SimplePanel Margin="22">
+            </WrapPanel>
+            <!---->
+            <hc:SimplePanel>
                 <wfi:WindowsFormsHost x:Name="pictureBoxHost"></wfi:WindowsFormsHost>
             </hc:SimplePanel>
 
             <!--<ScrollViewer>
                 <Image Source="1.png" />
             </ScrollViewer>-->
-
+            <!--与键盘焦点相关的事件包括PreviewGotKeyboardFocus，
+            GotKeyboardFocus，PreviewLostKeyboardFocus和
+LostKeyboardFocus。 这些事件被定义为Keyboard类的附加事件，
+            但作为基本元素类的等价路由事件访问更方便。
+当元素获得键盘焦点时，它将导致GotKeyboardFocus。 当元素失去键盘焦点时，
+            它会触发LostKeyboardFocus。
+            如果处理PreviewGotKeyboardFocus事件或PreviewLostKeyboardFocusEvent事件
+            并将Handled设置为true，则焦点不会更改-->
 
             <!--<StackPanel Margin="15">
                 <WrapPanel>

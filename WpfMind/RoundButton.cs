@@ -207,6 +207,7 @@ namespace Mind
         }
         private GraphicsPath GetRoundedRectPath(Rectangle rect, int radius)
         {
+
             int diameter = radius;
             Rectangle arcRect = new Rectangle(rect.Location, new Size(diameter, diameter));
             GraphicsPath path = new GraphicsPath();
@@ -242,7 +243,7 @@ namespace Mind
         {
             if (keyData == Keys.Tab)
             {
-                //OnKeyPress(new KeyPressEventArgs((char)Keys.Tab));
+                OnKeyDown(new KeyEventArgs(Keys.Tab));
                 return false;
             }
             else if (keyData == Keys.Enter)

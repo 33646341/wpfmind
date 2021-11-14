@@ -7,11 +7,15 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Markup;
 using System.Windows.Media;
 using Color = System.Drawing.Color;
+using FontFamily = System.Drawing.FontFamily;
 using Pen = System.Drawing.Pen;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
@@ -19,6 +23,7 @@ using Size = System.Drawing.Size;
 
 namespace WpfMind
 {
+    
     public partial class MainWindow
     {
         private System.Windows.Forms.PictureBox img;
@@ -29,7 +34,6 @@ namespace WpfMind
             InitializeComponent();
 
             this.DataContext = this;
-
             // 画布控件初始化（winform版迁移）
             img = new System.Windows.Forms.PictureBox();
             img.Paint += img_Paint;
@@ -39,18 +43,32 @@ namespace WpfMind
             img.Width = 3000;
             img.Height = 3000;
 
+            //当前选中节点赋初值null
+            //H，2021/11/14/11:48
+            myJref = new MyJref
+            {
+                tempJref = null
+            };
+            myJref.OnMyChange += new TmpChanged(JrefChanged);
+
             // 加载一个模板
             content_tb.Text = DocHelper.readFromTemplate();
 
-            // 属性窗口赋值
+            // 自动居中对齐
+            Show();
+            toCenter_Click(this, new RoutedEventArgs());
+
+            // 面板赋值，设置监听事件
+            //H，2021/11/14/11:48
             DemoModel = new PropertyGridDemoModel
             {
-                String = "TestString",
-                Enum = Gender.Female,
-                Boolean = true,
                 圆角半径 = 15,
-                VerticalAlignment = VerticalAlignment.Stretch
-            };
+                字体 = Family.微软雅黑,
+                大小 = 9,
+                字体样式 = System.Drawing.FontStyle.Regular,
+                颜色 = ModelColor.Black
+        }; 
+            DemoModel.OnChanged += new ModelChanged(model_OnChanged);
 
             // 拖放事件
             System.Windows.Forms.MouseEventHandler drag = (s, args) =>
@@ -74,8 +92,8 @@ namespace WpfMind
                 lastLocation = new Point(args.X, args.Y);
                 img.Location += si;
                 // 2021.11.2 feature:无限的画布
-                //img.Width = (int)pictureBoxHost.ActualWidth - img.Left;
-                //img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
+                img.Width = (int)pictureBoxHost.ActualWidth - img.Left;
+                img.Height = (int)pictureBoxHost.ActualHeight - img.Top;
                 //img.Size = new Size(splitContainer1.Panel2.Height - img.Top, splitContainer1.Panel2.Width - img.Left);
                 Console.WriteLine($"si={si}");
             };
@@ -92,13 +110,20 @@ namespace WpfMind
         // 绘制方法的入口
         private void draw()
         {
+            //Console.WriteLine("in drawing function");
             paint = null;// 刷新上一次的绘制
             bottomOfLastLeaf = -15; // 纵坐标初始点重置
+            maxDepth = 0; // 统计绘制最大深度重置
             string content = content_tb.Text;
 
             try
             {
+                //设置isPainting变量使绘制时节点的GotFocus事件不接受信号
+                //H，2021/11/14/11:48
+                isPainting = true;
+
                 img.Controls.Clear();
+                //Console.WriteLine("img ctrs cleared");
                 var data = JsonConvert.DeserializeObject(content) as JArray;
                 RoundButton sentinelNode = new RoundButton();
                 sentinelNode.isRootTopic = true;
@@ -110,19 +135,26 @@ namespace WpfMind
                 img.Scale(new SizeF(1 / scale, 1 / scale));
                 renderChildrenNodes(sentinelNode, data);
                 img.Scale(new SizeF(scale, scale));
+                //绘制完成，isPainting完成
+                //H，2021/11/14/11:48
+                isPainting = false;
                 //img.ResumeLayout();
 
                 //img.Invalidate();
                 img.Refresh();
 
+                Console.WriteLine("最大深度" + maxDepth);
+                Console.WriteLine("bottomOfLastLeaf=" + bottomOfLastLeaf);
+
                 //img.SizeMode = PictureBoxSizeMode.Zoom;
-                Console.WriteLine(img.ClientRectangle.Size);
+                //Console.WriteLine(img.ClientRectangle.Size);
             }
             catch { }
         }
 
         private void renderChildrenNodes(RoundButton parentNode, JArray childrenNodes)
         {
+            //Console.WriteLine("in renderChildrenNodes function");
             if (parentNode.isRootTopic)// 根节点前的初始辅助节点 做一点修正
             {
                 var obj = childrenNodes[0] as JObject;
@@ -153,11 +185,15 @@ namespace WpfMind
         }
 
         private bool ctrlPressed; // 是否按下ctrl键
-
+        int maxDepth = 0;
         private void NewMethod(RoundButton parentNode, int child_index, JToken node)
         {
+            //Console.WriteLine("in NewMethod function");
             RoundButton newNode = new RoundButton();
             newNode.Jref = (JObject)node;
+            int depth = System.Text.RegularExpressions.Regex.Matches(newNode.Jref.Path, ".children.attached").Count;
+            maxDepth = depth > maxDepth ? depth : maxDepth;
+
             ////添加上下文菜单
             //NewMenustrip(newNode);
 
@@ -183,23 +219,21 @@ namespace WpfMind
             newNode.HoverColor = Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
             newNode.Text = node["title"].ToString();//按钮文本
 
-            var a = (JObject)node.SelectToken(@"style.properties");
-            Console.WriteLine(a?["fo:font-weight"] ?? "0");
-            //newNode.Text =(string) ;
+            //
+            //读样式
+            //H，2021/11/14/11:48
+            ReadStyles(newNode);
 
-
-
-
-            newNode.Radius = DemoModel?.圆角半径 ?? 15;
             // 绘制结束
-
             // 拖拽事件
             newNode.AllowDrop = true;
             newNode.MouseDown += (s, e) =>
             {
                 if (e.Button == System.Windows.Forms.MouseButtons.Left && e.Clicks == 1)
                 {
-                    var b = s as RoundButton; b.DoDragDrop(b, (System.Windows.Forms.DragDropEffects)DragDropEffects.All);
+                    var b = s as RoundButton; 
+                    //crtjrf = b.Jref;
+                    b.DoDragDrop(b, (System.Windows.Forms.DragDropEffects)DragDropEffects.All);
                 }
             };
             newNode.DragEnter += (s, e) =>
@@ -229,18 +263,36 @@ namespace WpfMind
             // 缩放事件
             newNode.KeyDown += (_, args) =>
             {
-
                 ctrlPressed = args.Control;
-
-
             };
             // 缩放结束
-            //tab/enter键的处理
-            newNode.KeyDown += (_, args) =>
+            newNode.GotFocus += (s, e) =>
             {
-                //Btn_KeyPress(_, args);
+                if (isPainting != true)//是Painting的话就不操作
+                {
+                    RoundButton btn = s as RoundButton;
+                    myJref.tempJref = btn.Jref;
+                    Console.WriteLine("myJref.tempJref has title : " + myJref.tempJref["title"]);
+                }
+                Console.WriteLine("Gotfocus has title : " + newNode.Jref["title"]);
             };
+            if (myJref.tempJref.Path == newNode.Jref.Path&&isNodeOp==true)
+            {
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    //Keyboard.Focus(pictureBoxHost);
+                    newNode.Focus();
+                }));
+                //Keyboard.Focus(pictureBoxHost);
+                //panel.Focus();
+            }
 
+            //tab/enter/del键的处理，H
+            newNode.KeyDown += Btn_KeyDown;
+            //if (myJref.tempJref?.Path == newNode.Jref.Path)
+            //{
+            //    newNode.Focus();
+            //}
             // 重命名事件
             newNode.KeyPress += (s, e) =>
             {
@@ -260,13 +312,25 @@ namespace WpfMind
                     Point cc1 = parentNode.rightPoint + new Size(15, 0);   // First control point
                     Point cc2 = newNode.leftPoint + new Size(-15, 0);  // Second control point
                     Point pp2 = newNode.leftPoint;  // Endpoint
-                    Pen penpen = new Pen(Color.FromArgb(255, 0, 0, 255), 3);
+
+                    Pen penpen;
+                    switch (ThemeManager.Current.ApplicationTheme.GetValueOrDefault())
+                    {
+                        case ApplicationTheme.Light:
+                            penpen = new Pen(Color.FromArgb(255, 0, 0, 255), 3);
+                            break;
+                        case ApplicationTheme.Dark:
+                            penpen = new Pen(Color.FromArgb(255, 255, 255, 255), 3);
+                            break;
+                        default:
+                            penpen = new Pen(Color.FromArgb(255, 0, 0, 255), 3);
+                            break;
+                    }
                     g.DrawBezier(penpen, pp1, cc1, cc2, pp2);
                 };
             }
 
-            newNode.Focus();
-            //tempbtn = newNode;
+
             if (!isLeaf((JObject)node))
             {
                 var ccc = node["children"]["attached"] as JArray;//遍历子节点
@@ -294,8 +358,6 @@ namespace WpfMind
 
         private void btnClickMe_Click(object sender, RoutedEventArgs e)
         {
-
-
             draw();
             //lbResult.Items.Add(pnlMain.FindResource("strPanel").ToString());
             //lbResult.Items.Add("hi");
@@ -372,9 +434,10 @@ namespace WpfMind
         }
         #endregion
 
-        private Color _baseColor;
+        private Color _baseColor = Color.Azure;
         private void btn_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            //outline.Children.Add(ddd);
             //var s = (ToggleButton)sender;
             //if ((bool)s.IsChecked)
             //{
@@ -402,11 +465,35 @@ namespace WpfMind
             text_tb.Text = textvalue.Text;
             text_tb.Visibility = Visibility.Visible;
         }
-
+        
         private void content_tb_TextChanged(object sender, TextChangedEventArgs e)
         {
+            //改变文本
+            //H，2021/11/14/11:48
+            if (myJref.tempJref == null)//初始时加载
+            {
+                Console.WriteLine("content_tb is initializing");
+                var data = JsonConvert.DeserializeObject(content_tb.Text) as JArray;
+                var obj = data[0] as JObject;
+                var rootTopic = obj["rootTopic"] as JObject;
+                myJref.tempJref = rootTopic;
+                Console.WriteLine("myJref has the value of rootTopic,not null anymore");
+            }
             if (img != null)
+            {
+                //Console.WriteLine("Begin drawing");
                 draw();
+
+                //撤销操作，H
+                if (recalled == false)//除了撤销外的其它操作
+                {
+                    Recall();//记录修改
+                }
+                else//撤销操作
+                {
+                    recalled = false;
+                }
+            }
         }
 
         private void ToggleButton_Checked(object sender, RoutedEventArgs e)
@@ -429,14 +516,24 @@ namespace WpfMind
             content_tb.Text = DocHelper.read();
         }
 
+        //DemoModel注册，H
         public static readonly DependencyProperty DemoModelProperty = DependencyProperty.Register(
     "DemoModel", typeof(PropertyGridDemoModel), typeof(MainWindow), new PropertyMetadata(default(PropertyGridDemoModel)));
-
         public PropertyGridDemoModel DemoModel
         {
             get => (PropertyGridDemoModel)GetValue(DemoModelProperty);
             set => SetValue(DemoModelProperty, value);
             //Dispatcher.Invoke((Action)(()=> btnClickMe_Click(this,new RoutedEventArgs()))); }
         }
+        private void toCenter_Click(object sender, RoutedEventArgs e)
+        {
+            var aw = (int)(pictureBoxHost.ActualWidth * 1.2357);//有偏移，原因未知
+            Console. WriteLine("aw=" + aw);
+            var ah = (int)pictureBoxHost.ActualHeight;
+            var iw = maxDepth * (153 + 30) + 153;
+            var ih = bottomOfLastLeaf;
+            img.Location = new Point((aw - iw) / 2, (ah - ih) / 2);
+         }
+
     }
 }
