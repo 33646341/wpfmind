@@ -26,57 +26,29 @@
                 <Menu HorizontalAlignment="Left">
                     <MenuItem Header="文件">
                         <MenuItem Header="打开(O)" Click="MenuItem_Click"/>
-                        <MenuItem Header="保存"/>
-                        <MenuItem Header="另存为"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="保存" Name="saveBtn"/>
+                        <MenuItem Header="另存为" Name="saveAsBtn"/>
+                        <MenuItem Header="导入" Name="pullInBtn"/>
+                        <MenuItem Header="导出" Name="pushOutBtn"/>
                     </MenuItem>
                     <MenuItem Header="编辑">
-                        <MenuItem Header="撤销"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="撤销" Name="backOut"/>
+                        <MenuItem Header="重做" Name="reDo"/>
+                        <MenuItem Header="删除" Name="delete"/>
                     </MenuItem>
                     <MenuItem Header="插入">
-                        <MenuItem Header="Header1"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                    </MenuItem>
-                    <MenuItem Header="工具">
-                        <MenuItem Header="Header1"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="主题" Name="topic"/>
+                        <MenuItem Header="子主题" Name="sonTopic"/>
                     </MenuItem>
                     <MenuItem Header="查看">
-                        <MenuItem Header="Header1"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="思维导图" Name="mindMap"/>
+                        <MenuItem Header="大纲模式" Name="outLineBtn"/>
+                        <MenuItem Header="放大" Name="magnifyBtn"/>
+                        <MenuItem Header="缩小" Name="zoomOutBtn"/>
                     </MenuItem>
                     <MenuItem Header="帮助">
-                        <MenuItem Header="Header1"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
-                        <MenuItem Header="Header2"/>
+                        <MenuItem Header="快捷键助手" Name="shortcutBtn"/>
+                        <MenuItem Header="关于@思维导图" Name="aboutUsBtn"/>
                     </MenuItem>
                 </Menu>
             </StackPanel>
