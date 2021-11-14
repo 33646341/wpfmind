@@ -11,13 +11,18 @@ namespace Mind
         Point leftPoint { get; set; }
         Point rightPoint { get; set; }
         bool isRootTopic { get; set; }
-        JObject Jref { get; set; }
+         JObject Jref { get; set; }
     }
-
+    public interface NodeTextBox
+    {
+        void btnTextBox_KeyDown(object sender, KeyEventArgs e);
+        Font myFont { get; set; }
+    }
     public enum ControlState { Hover, Normal, Pressed }
-    public class RoundButton : Button, MindNode
+    public class RoundButton : Button, MindNode, NodeTextBox
     {
         private int radius;//半径 
+        public TextBox btnTextBox = new TextBox();
         public Color _baseColor = Color.FromArgb(51, 161, 224);//基颜色
         private Color _hoverColor = Color.FromArgb(51, 0, 224);//基颜色
         private Color _normalColor = Color.FromArgb(0, 161, 224);//基颜色
@@ -81,6 +86,7 @@ namespace Mind
         public Point rightPoint { get => new Point(Left + Width, Top + Height / 2); set => Console.WriteLine("hihihihi"); }
         public bool isRootTopic { get; set; }
         public JObject Jref { get; set; }
+        public Font myFont { get; set; }
 
         protected override void OnMouseEnter(EventArgs e)//鼠标进入时
         {
@@ -98,6 +104,14 @@ namespace Mind
             if (e.Button == MouseButtons.Left && e.Clicks == 1)//鼠标左键且点击次数为1
             {
                 ControlState = ControlState.Pressed;//按下的状态
+            }
+            if (e.Button == MouseButtons.Left && e.Clicks == 2)//鼠标左键且点击次数为2
+            {
+                //提供对textbox的监控事件
+                ControlState = ControlState.Pressed;//按下的状态
+                btnTextBox.Text =this.Text;
+                btnTextBox.Visible = true;
+                btnTextBox.BackColor = this._normalColor;
             }
         }
         protected override void OnMouseUp(MouseEventArgs e)//鼠标弹起
@@ -119,6 +133,18 @@ namespace Mind
         public RoundButton()
         {
             Radius = 15;
+
+            //初始化控件时，就自带一个隐藏的文本框
+            btnTextBox.Size = new Size(153, 60);
+            this.Controls.Add(btnTextBox);
+            btnTextBox.Tag =this;
+            btnTextBox.ImeMode = ImeMode.NoControl;
+            btnTextBox.Visible = false;
+            btnTextBox.Multiline = true;
+            btnTextBox.Font = this.myFont;
+            btnTextBox.Text = this.Text;
+            //btnTextBox.KeyDown += new KeyEventHandler(btnTextBox_KeyDown);
+
             this.FlatStyle = FlatStyle.Flat;
             this.FlatAppearance.BorderSize = 0;
             this.ControlState = ControlState.Normal;
@@ -227,17 +253,6 @@ namespace Mind
             base.OnSizeChanged(e);
         }
 
-        //public event KeyPressEventHandler TabPress;
-
-        //protected override void OnKeyPress(KeyPressEventArgs e)
-        //{
-        //    if (e.KeyChar == (char)Keys.Tab)
-        //    {
-        //        //MessageBox.Show("tab");
-        //        this.Focus();
-        //    }
-        //    base.OnKeyPress(e);
-        //}
 
         protected override bool ProcessDialogKey(Keys keyData)
         {
@@ -253,5 +268,15 @@ namespace Mind
             return base.ProcessDialogKey(keyData);
         }
 
+        public void btnTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue == 13)
+            {
+                this.Text = btnTextBox.Text;
+                btnTextBox.Visible = false;
+                //更改json文件内容
+                this.Jref["title"] = this.Text;
+            }
+        }
     }
 }

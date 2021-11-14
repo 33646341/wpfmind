@@ -1,4 +1,4 @@
-﻿using HandyControl.Controls;
+using HandyControl.Controls;
 using HandyControl.Themes;
 using HandyControl.Tools;
 using Mind;
@@ -11,26 +11,33 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using Application = System.Windows.Application;
 using Color = System.Drawing.Color;
+using DragDropEffects = System.Windows.DragDropEffects;
 using FontFamily = System.Drawing.FontFamily;
 using Pen = System.Drawing.Pen;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
+using TextBox = HandyControl.Controls.TextBox;
+using TreeNode = System.Windows.Forms.TreeNode;
 //using RoundButton = System.Windows.Controls.Button;
 
 namespace WpfMind
 {
-    
+
     public partial class MainWindow
     {
+   
         private System.Windows.Forms.PictureBox img;
         private Point lastLocation; // 画布上次被放置的位置
 
         public MainWindow()
         {
+            
             InitializeComponent();
 
             this.DataContext = this;
@@ -49,6 +56,7 @@ namespace WpfMind
             {
                 tempJref = null
             };
+
             myJref.OnMyChange += new TmpChanged(JrefChanged);
             // 加载一个模板
             content_tb.Text = DocHelper.readFromTemplate();
@@ -131,13 +139,31 @@ namespace WpfMind
             pictureBoxHost.Child.MouseDown += (s, args) => { lastLocation = new Point(args.X, args.Y); pictureBoxHost.Child.MouseMove += drag1; };
             pictureBoxHost.Child.MouseUp += (s, args) => pictureBoxHost.Child.MouseMove -= drag1;
             // 拖放结束
-
         }
 
         private Action<Graphics> paint = (g) => { };//多播委托
         private int bottomOfLastLeaf; // 对于所有的叶子节点，保存它的底边y坐标，方便计算下一个叶子节点相对位置。
         private float scale = 1; // 缩放比例
+        static string answer = "";
+        #region wjc 大纲模式遍历
+        private string dfsShow(JObject obj, TreeNode node)
+        {
+            answer += "  " + obj["title"].ToString();
 
+            if (obj.Property("children") == null)
+                return answer;
+            else
+            {
+                foreach (JObject son in obj["children"]["attached"])
+                {
+                    TreeNode node0 = node.Nodes.Add(son["title"].ToString());
+                    answer += "\r\n" + "  ";
+                    dfsShow(son, node0);
+                }
+            }
+            return answer;
+        }
+        #endregion
         // 绘制方法的入口
         private void draw()
         {
@@ -173,25 +199,24 @@ namespace WpfMind
 
                 //img.Invalidate();
                 img.Refresh();
+                //wjc 每次绘制时调用大纲模式遍历结点
+                NewMethod1();
 
                 Console.WriteLine("最大深度" + maxDepth);
                 Console.WriteLine("bottomOfLastLeaf=" + bottomOfLastLeaf);
-
-                //img.SizeMode = PictureBoxSizeMode.Zoom;
-                //Console.WriteLine(img.ClientRectangle.Size);
             }
             catch { }
+
+
         }
 
         private void renderChildrenNodes(RoundButton parentNode, JArray childrenNodes)
         {
-            //Console.WriteLine("in renderChildrenNodes function");
             if (parentNode.isRootTopic)// 根节点前的初始辅助节点 做一点修正
             {
                 var obj = childrenNodes[0] as JObject;
                 var rootTopic = obj["rootTopic"] as JObject;
                 NewMethod(parentNode, 0, rootTopic);
-                //Console.WriteLine(obj["rootTopic"]["title"]);
             }
             else
             {
@@ -216,6 +241,37 @@ namespace WpfMind
         }
 
         private bool ctrlPressed; // 是否按下ctrl键
+        #region wjc:文本和字体更改的键盘响应
+        private void btnTextBox_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            System.Windows.Forms.TextBox s = sender as System.Windows.Forms.TextBox; 
+            if (e.KeyValue == 17)//子节点
+            {
+                AddFontStyle(((RoundButton)s.Tag));
+            }
+            if (e.KeyValue == 13)
+            { 
+                string content = s.Text;
+                ((RoundButton)s.Tag).Text = s.Text;
+                ((RoundButton)s.Tag).Visible = false;
+                //更改json文件内容
+                ((RoundButton)s.Tag).Jref["title"] =((RoundButton)s.Tag).Text;
+                content_tb.Text = JsonConvert.SerializeObject(((RoundButton)s.Tag).Jref.Root, Formatting.Indented);
+            }
+        }
+        Font font;
+        private void AddFontStyle(RoundButton newNode)
+        {
+            if ((newNode.Jref) != null)
+            {
+                newNode.myFont = font;
+                newNode.Jref.Add(new JProperty("fontName", font.Name));
+                newNode.Jref.Add(new JProperty("fontSize", font.Size));
+                newNode.Jref.Add(new JProperty("fontStyle", font.Style));
+            }
+            content_tb.Text = JsonConvert.SerializeObject(newNode.Jref.Root, Formatting.Indented);
+        }
+        #endregion
         int maxDepth = 0;
         private void NewMethod(RoundButton parentNode, int child_index, JToken node)
         {
@@ -231,7 +287,6 @@ namespace WpfMind
             // 绘制形状
             img.Controls.Add(newNode);
             newNode.Size = new Size(153, 60);
-            //newNode.Location = new Point(parentNode.rightPoint.X + 30, (img.Height - newNode.Width) / 2 + (newNode.Height + 10) * child_index);
             newNode.Location = new Point(parentNode.rightPoint.X + 30, (newNode.Height + 10) * child_index);
 
             if (bottomOfLastLeaf > 0)
@@ -242,7 +297,8 @@ namespace WpfMind
             {
                 newNode.Top = 0;
             }
-
+            if (newNode.myFont != null)
+                newNode.Font = newNode.myFont;
             //newNode.Font = new Font("微软雅黑", 15.73109F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(134)));
             newNode.NormalColor = Color.White;
             newNode._baseColor = _baseColor;
@@ -255,7 +311,8 @@ namespace WpfMind
             //H，2021/11/14/11:48
             ReadStyles(newNode);
 
-            // 绘制结束
+            // wjc:增加按钮文本更改事件
+            newNode.btnTextBox.KeyDown+= new System.Windows.Forms.KeyEventHandler(btnTextBox_KeyDown);
             // 拖拽事件
             newNode.AllowDrop = true;
             newNode.MouseDown += (s, e) =>
@@ -295,7 +352,7 @@ namespace WpfMind
 
             };
             // 拖拽结束
-
+            
             // 缩放事件
             newNode.KeyDown += (_, args) =>
             {
@@ -304,6 +361,9 @@ namespace WpfMind
             // 缩放结束
             newNode.GotFocus += (s, e) =>
             {
+                // wjc
+                //btnTextBox_KeyDown(_, args);
+                
                 if (isPainting != true)//是Painting的话就不操作
                 {
                     RoundButton btn = s as RoundButton;
@@ -395,11 +455,6 @@ namespace WpfMind
         private void btnClickMe_Click(object sender, RoutedEventArgs e)
         {
             draw();
-            //lbResult.Items.Add(pnlMain.FindResource("strPanel").ToString());
-            //lbResult.Items.Add("hi");
-
-            //lbResult.Items.Add(this.FindResource("strWindow").ToString());
-            //lbResult.Items.Add(Application.Current.FindResource("strApp").ToString());
         }
 
         #region Change Theme
@@ -407,12 +462,12 @@ namespace WpfMind
 
         private void ButtonSkins_OnClick(object sender, RoutedEventArgs e)
         {
-            if (e.OriginalSource is Button button)
+            if (e.OriginalSource is System.Windows.Controls.Button button)
             {
                 PopupConfig.IsOpen = false;
                 if (button.Tag is ApplicationTheme tag)
                 {
-                    ((App)Application.Current).UpdateTheme(tag);
+                    ((App)System.Windows.Application.Current).UpdateTheme(tag);
 
                 }
                 else if (button.Tag is System.Windows.Media.Brush accentTag)
@@ -506,14 +561,17 @@ namespace WpfMind
         {
             //改变文本
             //H，2021/11/14/11:48
-            if (myJref.tempJref == null)//初始时加载
+            if (myJref != null)
             {
-                Console.WriteLine("content_tb is initializing");
-                var data = JsonConvert.DeserializeObject(content_tb.Text) as JArray;
-                var obj = data[0] as JObject;
-                var rootTopic = obj["rootTopic"] as JObject;
-                myJref.tempJref = rootTopic;
-                Console.WriteLine("myJref has the value of rootTopic,not null anymore");
+                if (myJref.tempJref == null)//初始时加载
+                {
+                    Console.WriteLine("content_tb is initializing");
+                    var data = JsonConvert.DeserializeObject(content_tb.Text) as JArray;
+                    var obj = data[0] as JObject;
+                    var rootTopic = obj["rootTopic"] as JObject;
+                    myJref.tempJref = rootTopic;
+                    Console.WriteLine("myJref has the value of rootTopic,not null anymore");
+                }
             }
             if (img != null)
             {
@@ -535,6 +593,23 @@ namespace WpfMind
         private void ToggleButton_Checked(object sender, RoutedEventArgs e)
         {
             pictureBoxHost.Margin = new Thickness(300, 0, (bool)prop_btn.IsChecked ? 300 : 0, 0);
+        }
+
+        private void NewMethod1()
+        {
+            answer = "";
+            var outLineTree = new mind.NewTreeView();
+            treeHost.Child = outLineTree;
+            outLineTree.Width = 1000;
+            outLineTree.Height = 1000;
+            outLineTree.BorderStyle = BorderStyle.None;
+            //读取json文件内容
+            string message = content_tb.Text;
+            var obj1 = JsonConvert.DeserializeObject(message) as JArray;
+            var obj = obj1[0] as JObject;
+            JObject root = obj["rootTopic"] as JObject;
+            TreeNode node = outLineTree.Nodes.Add(root["title"].ToString());
+            dfsShow(root, node);
         }
 
         private void ToggleButton_Unchecked(object sender, RoutedEventArgs e)
@@ -573,5 +648,114 @@ namespace WpfMind
             img.Location = new Point((aw - iw) / 2, (ah - ih) / 2);
          }
 
+        //wjc 操作面板设计
+        private void SaveBtn_Click(object sender, RoutedEventArgs e)
+        {
+            //保存：保存当下更改
+            draw();
+            HandyControl.Controls.MessageBox.Show("保存成功");
+        }
+
+        private void SaveAsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DocHelper.create(content_tb.Text);
+        }
+
+        private void PullInBtn_Click(object sender, RoutedEventArgs e)
+        {
+            content_tb.Text = DocHelper.read();
+        }
+
+        private void PushOutBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DocHelper.create(content_tb.Text);
+            HandyControl.Controls.MessageBox.Show("导出成功");
+        }
+
+        private void BackOut_Click(object sender, RoutedEventArgs e)
+        {
+            DocHelper.PerformClick(button);
+        }
+
+        private void ReDo_Click(object sender, RoutedEventArgs e)
+        {
+            content_tb.Text = DocHelper.readFromTemplate();
+        }
+
+        private void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            DelTopic(myJref.tempJref);
+        }
+
+        private void Topic_Click(object sender, RoutedEventArgs e)
+        {
+            AddBroTopic(myJref.tempJref);
+        }
+
+        private void SonTopic_Click(object sender, RoutedEventArgs e)
+        {
+            AddSubTopic(myJref.tempJref);
+        }
+
+        private void MindMap_Click(object sender, RoutedEventArgs e)
+        {
+            draw();
+            HandyControl.Controls.MessageBox.Show("重新加载思维导图成功");
+        }
+
+        private void OutLineBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DocHelper.PerformClick(outLine); 
+        }
+
+        private void MagnifyBtn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ZoomOutBtn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ShortcutBtn_Click(object sender, RoutedEventArgs e)
+        {
+            PopupWindow popup = new PopupWindow()
+            {
+                MinWidth = 400,
+                Title = "快捷键助手",
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                ShowInTaskbar = true,
+                AllowsTransparency = true,
+                WindowStyle = WindowStyle.None
+            };
+            System.Windows.Controls.TextBox txtUsername = new System.Windows.Controls.TextBox();
+            txtUsername.Text = "Tab: 增加兄弟节点" +"\r\n"+ "Enter: 增加子节点" + "\r\n" + "Delete: 删除节点" + "\r\n";
+            popup.PopupElement = txtUsername;
+            popup.ShowDialog();
+
+        }
+
+        private void AboutUsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.TextBox txtUsername = new System.Windows.Controls.TextBox();
+            txtUsername.Text = "项目: 思维导图" + "\r\n" + "团队负责人: 仇钧超" + "\r\n" + "团队成员: 王继承，胡一鸣" + "\r\n";
+            PopupWindow popup = new PopupWindow()
+            {
+                MinWidth = 400,
+                Title = "关于@我们",
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                ShowInTaskbar = true,
+                AllowsTransparency = true,
+                WindowStyle = WindowStyle.None,
+            };
+            popup.PopupElement = txtUsername;      
+            popup.ShowDialog();
+        }
+
+        private void newBtm_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
