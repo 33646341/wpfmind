@@ -1,4 +1,4 @@
-﻿<hc:Window
+<hc:Window
     x:Class="WpfMind.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,7 +10,7 @@
     xmlns:local="clr-namespace:WpfMind"
     xmlns:wfi="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
     
-    Title="欢迎来到思维导图"
+    Title="欢迎来到 NetMind 思维导图"
     Width="1200"
     Height="700"
     ShowTitle="True"
@@ -25,30 +25,40 @@
             <StackPanel Height="29">
                 <Menu HorizontalAlignment="Left">
                     <MenuItem Header="文件">
-                        <MenuItem Header="打开(O)" Click="MenuItem_Click"/>
-                        <MenuItem Header="保存" Name="saveBtn"/>
-                        <MenuItem Header="另存为" Name="saveAsBtn"/>
-                        <MenuItem Header="导入" Name="pullInBtn"/>
-                        <MenuItem Header="导出" Name="pushOutBtn"/>
+                        <MenuItem Header="新建" Name="newBtm" Click="newBtm_Click"/>
+                        <MenuItem Header="打开" Click="MenuItem_Click"/>
+                        <MenuItem Header="保存" Name="saveBtn" Click="SaveBtn_Click"/>
+                        <MenuItem Header="另存为" Name="saveAsBtn" Click="SaveAsBtn_Click"/>
+                        <MenuItem Header="导入" Name="pullInBtn" Click="PullInBtn_Click"/>
+                        <MenuItem Header="导出" Name="pushOutBtn" Click="PushOutBtn_Click"/>
+                        <MenuItem Header="分享" Click="MenuItem_Click"/>
+                        <MenuItem Header="退出" Click="MenuItem_Click"/>
                     </MenuItem>
                     <MenuItem Header="编辑">
-                        <MenuItem Header="撤销" Name="backOut"/>
-                        <MenuItem Header="重做" Name="reDo"/>
-                        <MenuItem Header="删除" Name="delete"/>
+                        <MenuItem Header="撤销" Name="backOut" Click="BackOut_Click"/>
+                        <MenuItem Header="重做" Name="reDo" Click="ReDo_Click"/>
+                        <MenuItem Header="删除" Name="delete" Click="Delete_Click"/>
+                        <MenuItem Header="拷贝样式" Click="MenuItem_Click"/>
+                        <MenuItem Header="粘贴样式" Click="MenuItem_Click"/>
+                        <MenuItem Header="重设样式" Click="MenuItem_Click"/>
+                        <MenuItem Header="前往中心主题" Click="MenuItem_Click"/>
                     </MenuItem>
                     <MenuItem Header="插入">
-                        <MenuItem Header="主题" Name="topic"/>
-                        <MenuItem Header="子主题" Name="sonTopic"/>
+                        <MenuItem Header="子主题" Name="sonTopic" Click="SonTopic_Click"/>
+                        <MenuItem Header="主题（之后）" Name="topicAfter" Click="Topic_Click"/>
+                        <MenuItem Header="主题（之前）" Name="topicBefore" Click="Topic_Click"/>
+                        <MenuItem Header="父主题" Name="topicFather" Click="Topic_Click"/>
                     </MenuItem>
                     <MenuItem Header="查看">
-                        <MenuItem Header="思维导图" Name="mindMap"/>
-                        <MenuItem Header="大纲模式" Name="outLineBtn"/>
-                        <MenuItem Header="放大" Name="magnifyBtn"/>
-                        <MenuItem Header="缩小" Name="zoomOutBtn"/>
+                        <MenuItem Header="属性面板" Name="mindMap" Click="MindMap_Click"/>
+                        <MenuItem Header="大纲视图" Name="outLineBtn" Click="OutLineBtn_Click"/>
+                        <MenuItem Header="放大" Name="magnifyBtn" Click="MagnifyBtn_Click"/>
+                        <MenuItem Header="缩小" Name="zoomOutBtn" Click="ZoomOutBtn_Click"/>
+                        <MenuItem Header="聚焦中心" Name="toCenterItem" Click="ZoomOutBtn_Click"/>
                     </MenuItem>
                     <MenuItem Header="帮助">
-                        <MenuItem Header="快捷键助手" Name="shortcutBtn"/>
-                        <MenuItem Header="关于@思维导图" Name="aboutUsBtn"/>
+                        <MenuItem Header="快捷键助手" Name="shortcutBtn" Click="ShortcutBtn_Click"/>
+                        <MenuItem Header="关于NetMind思维导图" Name="aboutUsBtn" Click="AboutUsBtn_Click"/>
                     </MenuItem>
                 </Menu>
             </StackPanel>
@@ -192,14 +202,18 @@
         </Grid.ColumnDefinitions>
         <hc:Drawer Name="DrawerLeft" Dock="Left" ShowMode="Cover" Margin="0,0,-0.185,0.109">
             <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
-                <Grid>
+                <Grid Name="outline">
                     <Grid.RowDefinitions>
+                    <!--wjc 新增行 存放TreeView-->                       
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <TextBlock Margin="10,0,0,0" Text="大纲视图" Style="{StaticResource TextBlockTitle}" HorizontalAlignment="Left"/>
                     <Button Command="hc:ControlCommands.Close" Grid.Row="0" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
-                    <TextBox x:Name="content_tb" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Width="120" TextChanged="content_tb_TextChanged" />
+                    <TextBox x:Name="content_tb" Grid.Row="1" AcceptsReturn="True" Visibility="Hidden" VerticalScrollBarVisibility="Visible" Height="93" TextWrapping="Wrap" Text="TextBox" Width="120" TextChanged="content_tb_TextChanged" />
+                    <wfi:WindowsFormsHost Grid.Row="2"  x:Name="treeHost"></wfi:WindowsFormsHost>
 
                 </Grid>
             </Border>
@@ -229,17 +243,16 @@
             </DockPanel.Resources>
 
             <WrapPanel DockPanel.Dock="Top" HorizontalAlignment="Center" Margin="10">
-                <Button Name="btnClickMe" Click="btnClickMe_Click" Style="{StaticResource ButtonPrimary}" Margin="20,0,10,0">保存更改</Button>
-                <ToggleButton Style="{StaticResource ToggleButtonSuccess}" Margin="0,0,10,0" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
-                <ToggleButton Style="{StaticResource ToggleButtonInfo}" Margin="0" x:Name="prop_btn" HorizontalAlignment="Stretch"  Content="全局设置" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
+                <ToggleButton Name="outLine" Style="{StaticResource ToggleButtonSuccess}" Margin="0,0,10,0" HorizontalAlignment="Stretch" Content="大纲视图" IsChecked="{Binding IsOpen,ElementName=DrawerLeft}" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked"/>
+                <ToggleButton Style="{StaticResource ToggleButtonInfo}" Margin="0" x:Name="prop_btn" HorizontalAlignment="Stretch"  Content="属性面板" IsChecked="{Binding IsOpen,ElementName=DrawerRight}" Checked="ToggleButton_Checked_1" Unchecked="ToggleButton_Unchecked"/>
                 <ToggleButton Visibility="Collapsed" x:Name="btn" MouseEnter="btn_MouseEnter" Height="45" MouseLeave="btn_MouseLeave" Checked="btn_Checked">
                     <WrapPanel>
                         <TextBlock x:Name="textvalue">hello world</TextBlock>
                         <TextBox x:Name="text_tb" Text="111" Visibility="Collapsed"></TextBox>
                     </WrapPanel>
                 </ToggleButton>
-                <Button Style="{StaticResource ButtonPrimary}" x:Name="button" Content="撤销" Margin="10,0,0,0" HorizontalAlignment="Stretch" Click="button_Click" PreviewLostKeyboardFocus="btnClickMe_PreviewLostKeyboardFocus" Width="60" />
-                <Button Name="toCenter" Click="toCenter_Click" Style="{StaticResource ButtonPrimary}" Margin="10,0,20,0">居中对齐</Button>
+                <Button Style="{StaticResource ButtonDanger}" x:Name="button" Content="撤销操作" Margin="10,0,0,0" HorizontalAlignment="Stretch" Click="button_Click" PreviewLostKeyboardFocus="btnClickMe_PreviewLostKeyboardFocus"/>
+                <Button Name="toCenter" Click="toCenter_Click" Style="{StaticResource ButtonPrimary}" Margin="10,0,20,0">聚焦中心</Button>
 
             </WrapPanel>
             <!---->

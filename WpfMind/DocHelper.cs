@@ -76,8 +76,8 @@ namespace Mind
         {
             Stream myStream;
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-
-            saveFileDialog1.Filter = "xmind files (*.xmind)|*.xmind|All files (*.*)|*.*";
+            //新增一些保存方式
+            saveFileDialog1.Filter = "xmind files (*.xmind)|*.xmind|All files (*.*)|*.*|word|*.word|txt|*.txt";
             saveFileDialog1.FilterIndex = 1;
             saveFileDialog1.RestoreDirectory = true;
 
@@ -110,5 +110,18 @@ namespace Mind
             }
         }
 
+        //wjc新增 performClick 等价代码
+        public static void PerformClick(System.Windows.Controls.Primitives.ButtonBase button)
+        {
+            var method = button.GetType().GetMethod("OnClick",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (method != null)
+            {
+                method.Invoke(button, null);
+            }
+
+            //button.Focus();
+        }
     }
 }
